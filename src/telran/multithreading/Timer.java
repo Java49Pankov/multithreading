@@ -22,11 +22,13 @@ public class Timer extends Thread {
 
 	@Override
 	public void run() {
-		while (true) {
+		boolean running = true;
+		while (running) {
 			System.out.println(LocalTime.now().format(dtf));
 			try {
 				sleep(timeout);
 			} catch (InterruptedException e) {
+				running = false;
 			}
 		}
 	}
