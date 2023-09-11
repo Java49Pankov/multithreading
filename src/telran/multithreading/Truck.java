@@ -5,7 +5,13 @@ public class Truck extends Thread {
 	private int load;
 	private static long elevator1;
 	private static long elevator2;
+	private static Object mutex = new Object();
 	private int nLoads;
+
+	public Truck(int load, int nLoads) {
+		this.load = load;
+		this.nLoads = nLoads;
+	}
 
 	public static long getElevator1() {
 		return elevator1;
@@ -13,11 +19,6 @@ public class Truck extends Thread {
 
 	public static long getElevator2() {
 		return elevator2;
-	}
-
-	public Truck(int load, int nLoads) {
-		this.load = load;
-		this.nLoads = nLoads;
 	}
 
 	@Override
@@ -28,8 +29,10 @@ public class Truck extends Thread {
 		}
 	}
 
-	private static synchronized void loadElevator2(int load) {
-		elevator2 += load;
+	private static void loadElevator2(int load) {
+		synchronized (mutex) {
+			elevator2 += load;
+		}
 	}
 
 	private static synchronized void loadElevator1(int load) {
