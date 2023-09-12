@@ -27,7 +27,6 @@ public class Runner extends Thread {
 				throw new IllegalStateException();
 			}
 		}
-		Instant finishTime = Instant.now();
-		results.add(new ResultTable(runnerId, finishTime));
+		results.add(new ResultTable(runnerId, Instant.now()));
 	}
 }
