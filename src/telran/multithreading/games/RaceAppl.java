@@ -34,6 +34,7 @@ public class RaceAppl {
 		startRunners(runners, race);
 		joinRunners(runners);
 		displayWinner(race);
+		
 	}
 
 	private static void displayWinner(Race race) {
