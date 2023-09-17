@@ -1,8 +1,5 @@
 package telran.multithreading.games;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
 import java.util.stream.IntStream;
 
 import telran.view.*;
@@ -15,8 +12,6 @@ public class RaceAppl {
 	private static final int MAX_DISTANCE = 3500;
 	private static final int MIN_SLEEP = 2;
 	private static final int MAX_SLEEP = 5;
-	private static final int N_SPACE = 10;
-	private static final int SPACE = 3;
 
 	public static void main(String[] args) {
 		InputOutput io = new ConsoleInputOutput();
@@ -34,25 +29,15 @@ public class RaceAppl {
 		int nThreads = io.readInt("Enter number of the runners", "Wrong number of the runners", MIN_THREADS,
 				MAX_THREADS);
 		int distance = io.readInt("Enter distance", "Wrong Distance", MIN_DISTANCE, MAX_DISTANCE);
-		List<ResultTable> results = Collections.synchronizedList(new ArrayList<>());
 		Race race = new Race(distance, MIN_SLEEP, MAX_SLEEP);
 		Runner[] runners = new Runner[nThreads];
-		Instant startRace = Instant.now();
-		startRunners(runners, race, results);
+		startRunners(runners, race);
 		joinRunners(runners);
-		displayResults(results, startRace, distance);
+		displayWinner(race);
 	}
 
-	private static void displayResults(List<ResultTable> results, Instant startRace, int distance) {
-		System.out.printf("Table of results at a distance %dm :\n " + "Place" + " ".repeat(SPACE) + "Racer number"
-				+ " ".repeat(SPACE) + "Time\n", distance);
-
-		int place = 1;
-		for (ResultTable result : results) {
-			long runningTime = ChronoUnit.MILLIS.between(startRace, result.finishTime);
-			System.out.printf(" ".repeat(SPACE) + "%d" + " ".repeat(N_SPACE) + "%d" + " ".repeat(N_SPACE) + "%d\n",
-					place++, result.runnerId, runningTime);
-		}
+	private static void displayWinner(Race race) {
+		System.out.println("Congratulations to runner " + race.getWinner());
 	}
 
 	private static void joinRunners(Runner[] runners) {
@@ -63,11 +48,12 @@ public class RaceAppl {
 				throw new IllegalStateException();
 			}
 		});
+
 	}
 
-	private static void startRunners(Runner[] runners, Race race, List<ResultTable> results) {
+	private static void startRunners(Runner[] runners, Race race) {
 		IntStream.range(0, runners.length).forEach(i -> {
-			runners[i] = new Runner(race, i + 1, results);
+			runners[i] = new Runner(race, i + 1);
 			runners[i].start();
 		});
 	}
