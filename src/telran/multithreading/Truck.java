@@ -1,11 +1,12 @@
 package telran.multithreading;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class Truck extends Thread {
 
 	private int load;
-	private static long elevator1;
-	private static long elevator2;
-	private static Object mutex = new Object();
+	private static AtomicLong elevator1 = new AtomicLong(0);
+	private static AtomicLong elevator2 = new AtomicLong(0);
 	private int nLoads;
 
 	public Truck(int load, int nLoads) {
@@ -14,11 +15,11 @@ public class Truck extends Thread {
 	}
 
 	public static long getElevator1() {
-		return elevator1;
+		return elevator1.get();
 	}
 
 	public static long getElevator2() {
-		return elevator2;
+		return elevator2.get();
 	}
 
 	@Override
@@ -30,13 +31,10 @@ public class Truck extends Thread {
 	}
 
 	private static void loadElevator2(int load) {
-		synchronized (mutex) {
-			elevator2 += load;
-		}
+		elevator2.addAndGet(load);
 	}
 
-	private static synchronized void loadElevator1(int load) {
-		elevator1 += load;
-
+	private static void loadElevator1(int load) {
+		elevator1.addAndGet(load);
 	}
 }
