@@ -22,6 +22,6 @@ public class Runner extends Thread {
 			}
 			System.out.println(runnerId);
 		}
-		race.setWinner(runnerId);
+		race.winner.compareAndSet(-1, runnerId);
 	}
 }

@@ -1,10 +1,12 @@
 package telran.multithreading.games;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class Race {
 	private int distance;
 	private int minSleep;
 	private int maxSleep;
-	private int winner = -1;
+	AtomicInteger winner = new AtomicInteger(-1);
 
 	public Race(int distance, int minSleep, int maxSleep) {
 		this.distance = distance;
@@ -13,13 +15,7 @@ public class Race {
 	}
 
 	public int getWinner() {
-		return winner;
-	}
-
-	public void setWinner(int winner) {
-		if (this.winner == -1) {
-			this.winner = winner;
-		}
+		return winner.get();
 	}
 
 	public int getDistance() {
