@@ -29,9 +29,12 @@ public class Runner extends Thread {
 			}
 			System.out.println(runnerId);
 		}
-		synchronized (race) {
+		try {
+			race.lock.lock();
 			finishTime = Instant.now();
 			finishRace();
+		} finally {
+			race.lock.unlock();
 		}
 	}
 
