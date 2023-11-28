@@ -27,10 +27,10 @@ public class Runner extends Thread {
 			} catch (InterruptedException e) {
 				throw new IllegalStateException();
 			}
-			System.out.println(runnerId);
 		}
+		finishTime = Instant.now();
+		
 		synchronized (race) {
-			finishTime = Instant.now();
 			finishRace();
 		}
 	}
