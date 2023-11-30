@@ -8,7 +8,7 @@ public class MessageBox {
 			this.wait();
 		}
 		this.message = message;
-		this.notify();
+		this.notifyAll();
 	}
 
 	public synchronized String get() throws InterruptedException {
@@ -17,7 +17,7 @@ public class MessageBox {
 		}
 		String res = message;
 		message = null;
-		this.notify();
+		this.notifyAll();
 		return res;
 	}
 
