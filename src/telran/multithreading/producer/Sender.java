@@ -20,10 +20,6 @@ public class Sender extends Thread {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-//			try {
-//				sleep(10);
-//			} catch (InterruptedException e) {
-//			}
 		}
 	}
 
