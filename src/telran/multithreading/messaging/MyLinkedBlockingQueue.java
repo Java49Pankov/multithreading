@@ -7,163 +7,170 @@ import java.util.concurrent.locks.*;
 public class MyLinkedBlockingQueue<E> implements MyBlockingQueue<E> {
 	int limit;
 	private LinkedList<E> queue = new LinkedList<>();
-	private ReentrantLock lock = new ReentrantLock();
-	private Condition waitingForConsuming = lock.newCondition();
-	private Condition waitingForProducing = lock.newCondition();
+	private Lock monitor = new ReentrantLock();
+	private Condition consumerWaitingCondition = monitor.newCondition();
+	private Condition producerWaitingCondition = monitor.newCondition();
 
 	public MyLinkedBlockingQueue(int limit) {
-		super();
 		this.limit = limit;
 	}
 
 	@Override
 	public boolean add(E e) {
+		if (e == null) {
+			throw new NullPointerException();
+		}
 		try {
-			lock.lock();
+			monitor.lock();
 			if (queue.size() == limit) {
 				throw new IllegalStateException();
 			}
-			Boolean res = queue.add(e);
-			waitingForConsuming.signal();
+			boolean res = queue.add(e);
+			consumerWaitingCondition.signal();
 			return res;
 		} finally {
-			lock.unlock();
+			monitor.unlock();
 		}
 	}
 
 	@Override
 	public boolean offer(E e) {
-		boolean res = false;
-		try {
-			lock.lock();
-			if (queue.size() == limit) {
-				throw new IllegalArgumentException();
-			} else {
-				res = queue.add(e);
-				waitingForConsuming.signal();
-			}
-		} finally {
-			lock.unlock();
+		if (e == null) {
+			throw new NullPointerException();
 		}
-		return res;
+		boolean res = true;
+		try {
+			monitor.lock();
+			if (queue.size() == limit) {
+				res = false;
+			} else {
+				queue.add(e);
+				consumerWaitingCondition.signal();
+			}
+			return res;
+		} finally {
+			monitor.unlock();
+		}
 	}
 
 	@Override
 	public void put(E e) throws InterruptedException {
+		if (e == null) {
+			throw new NullPointerException();
+		}
 		try {
-			lock.lock();
+			monitor.lock();
 			while (queue.size() == limit) {
-				waitingForProducing.await();
+				producerWaitingCondition.await();
 			}
 			queue.add(e);
-			waitingForConsuming.signal();
+			consumerWaitingCondition.signal();
 		} finally {
-			lock.unlock();
+			monitor.unlock();
 		}
 	}
 
 	@Override
 	public boolean offer(E e, long timeout, TimeUnit unit) throws InterruptedException {
-		boolean res = false;
-		try {
-			lock.lock();
-			if (waitingForConsuming.await(timeout, unit)) {
-				res = queue.add(e);
-			}
-		} finally {
-			lock.unlock();
+		if (e == null) {
+			throw new NullPointerException();
 		}
-		return res;
+		try {
+			monitor.lock();
+			while (queue.size() == limit) {
+				if (!producerWaitingCondition.await(timeout, unit)) {
+					return false;
+				}
+			}
+			queue.add(e);
+			consumerWaitingCondition.signal();
+			return true;
+		} finally {
+			monitor.unlock();
+		}
 	}
 
 	@Override
 	public E take() throws InterruptedException {
 		try {
-			lock.lock();
+			monitor.lock();
 			while (queue.isEmpty()) {
-				waitingForConsuming.await();
+				consumerWaitingCondition.await();
 			}
-			E element = queue.remove();
-			waitingForProducing.signal();
-			return element;
+			E res = queue.remove(0);
+			producerWaitingCondition.signal();
+			return res;
 		} finally {
-			lock.unlock();
+			monitor.unlock();
 		}
-
 	}
 
 	@Override
 	public E poll(long timeout, TimeUnit unit) throws InterruptedException {
-		E elem = null;
 		try {
-			lock.lock();
-			if (waitingForConsuming.await(timeout, unit)) {
-				elem = queue.remove();
+			monitor.lock();
+			while (queue.isEmpty()) {
+				if (!consumerWaitingCondition.await(timeout, unit)) {
+					return null;
+				}
 			}
+			E res = queue.remove();
+			producerWaitingCondition.signal();
+			return res;
 		} finally {
-			lock.unlock();
+			monitor.unlock();
 		}
-		return elem;
 	}
 
 	@Override
 	public E remove() {
 		try {
-			lock.lock();
-			if (queue.isEmpty()) {
-				throw new NoSuchElementException();
-			}
-			E removeMessage = queue.remove();
-			waitingForProducing.signal();
-			return removeMessage;
+			monitor.lock();
+			E result = queue.remove();
+			producerWaitingCondition.signal();
+			return result;
 		} finally {
-			lock.unlock();
+			monitor.unlock();
 		}
 	}
 
 	@Override
 	public E peek() {
-		E elem = null;
+		E result = null;
 		try {
-			lock.lock();
-			if (!queue.isEmpty()) {
-				elem = queue.getFirst();
-				waitingForConsuming.signal();
+			monitor.lock();
+			if (queue.size() != 0) {
+				result = queue.get(0);
 			}
+			return result;
 		} finally {
-			lock.unlock();
+			monitor.unlock();
 		}
-		return elem;
 	}
 
 	@Override
 	public E element() {
 		try {
-			lock.lock();
-			if (queue.isEmpty()) {
-				throw new NoSuchElementException();
-			}
-			E element = queue.getFirst();
-			waitingForConsuming.signal();
-			return element;
+			monitor.lock();
+			return queue.element();
 		} finally {
-			lock.unlock();
+			monitor.unlock();
 		}
 	}
 
 	@Override
 	public E poll() {
-		E element = null;
+		E result = null;
 		try {
-			lock.lock();
-			if (!queue.isEmpty()) {
-				element = queue.remove();
-				waitingForConsuming.signal();
+			monitor.lock();
+			result = queue.poll();
+			if (result != null) {
+				producerWaitingCondition.signal();
 			}
+			return result;
 		} finally {
-			lock.unlock();
+			monitor.unlock();
 		}
-		return element;
 	}
 
 }
